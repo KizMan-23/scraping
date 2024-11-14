@@ -2,6 +2,7 @@ from bs4 import BeautifulSoup
 import requests
 import json
 import time
+from io import StringIO
 
 watch_url = "https://www.walmart.com/ip/OLEVS-Mens-Watches-Chronograph-Business-Dress-Quartz-Stainless-Steel-Waterproof-Luminous-Date-Wrist-Watch-For-Men-Blue-Dial/5303331858?classType=VARIANT&athbdg=L1600&adsRedirect=true"
 
@@ -14,34 +15,36 @@ HEADERS = {
 
 response = requests.get(watch_url, headers=HEADERS)
 
-with open("page_resp.text", "w+", encoding='utf-8') as file:
-    file.write(response)
+with open("page_resp.html", "w+", encoding='utf-8') as file:
+    file.write(str(response))
 
 
-with open("page_resp.text") as f:
+with open("page_resp.html") as f:
     rep = f.read()
 
-soup = BeautifulSoup(rep.text, "html.parser")
-main_page = soup.find_all('div', id='__next')
+soup = BeautifulSoup(response.text, "html.parser")
+main_page = soup.find('div', id= "__next")
+product_description = main_page.find('h1', class_ = 'lh-copy dark-gray mv1 f4 mh0-l mh3 b').text
+#Lesson: "find_all" returns a list of contents. Better to use "find"
 
-data = json.load(main_page)
+brand_name = main_page.find("div", class_= "mt0 mh0-l mh3").text
+discount_price = main_page.find("span", class_ = "inline-flex flex-column").text.split()[1]
+original_price = main_page.find("span", class_ = "mr2 f6 gray strike").text
+rating = main_page.find("span", class_ = "w_iUH7").text
+color = main_page.find("div", class_ = "mid-gray mb2").text.split()[1]
 
-# brand_name = soup.find_all('div', class_ = 'mt0 mh0-l mh3')
+option_list = main_page.find("div", class_ = "flex flex-wrap nl1 nr1")
+option_a = option_list.find("div", class_ = "flex flex-column bg-white")
 
-# product_description = soup.find_all('div', class_ = 'lh-copy dark-gray mv1 f4 mh0-l mh3 b')
+available_colors = []
+while option_a:
+    available_colors.append(option_a.get_text(strip=True))
+    option_a = option_a.find_next_sibling("div", class_ = "flex flex-column bg-white")
 
-print(data)
-#print(brand_name)
-#print(product_description)
-
-#discount = 
-#original_price = 
-#rating =     #over 5
-#available_colors = 
-#metal_type = 
-
+    
+print(available_colors)
 
 
 #enter each section
-#general div with class: class="flex flex-wrap w-100 flex-grow-0 flex-shrink-0 ph2 pr0-xl pl4-xl mt0-xl"
-#obtain name of the watch, normal_price, bonus_price, color, brand and any other meta data
+# div class_ = "h-100 relative" -- parent div for other sections of watch prodcuts 
+
